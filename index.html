@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<title>도장찍기_중간</title>
+<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"/>
+<style>
+  @font-face { font-family: Independent; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/Dokrip.woff') format('woff'); font-display: swap; }
+  @font-face { font-family: ChungjuKimsaeng; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2312-1@1.1/ChungjuKimSaengTTF.woff2') format('woff2'); font-display: swap; }
+@font-face {
+    font-family: 'GounBatang';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunBatang-Regular.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-SemiBold.woff') format('woff');
+    font-weight: 600;
+    font-display: swap;}
+
+@font-face {
+    font-family: 'NeoDonggeunmo';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff');font-weight: normal;font-display: swap;}
+
+@font-face {
+    font-family: 'Cafe24LovingU';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2405-3@1.1/Cafe24Lovingu.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+
+  :root { --ui-bg: rgba(255,255,255,0.78); }
+
+  body {
+    background-image: url('page.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    margin: 0;
+    overflow: hidden;
+    font-family: ChungjuKimsaeng;
+    background-color: #ffffff;
+    font-size: 14px;
+  }
+
+  #backgroundSlider { position: fixed; inset: 0; overflow: hidden; z-index: -1;  pointer-events: none;  }
+  #backgroundSlider img.bg-slide { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.8s ease; }
+  #backgroundSlider img.active { opacity: 1; }
+  #backgroundSlider button {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.6); border: none; font-size: 2rem;
+    padding: 10px 15px; cursor: pointer; border-radius: 10px; z-index: 10; font-weight: bold;
+  }
+  #prevBg { left: 20px; }  #nextBg { right: 20px; }
+
+  /* 인트로 */
+  #introScreen { position: fixed; inset: 0; background-image: url('배경 이미지.png'); background-size: cover; background-position: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 100; }
+  #introScreen h1 { font-size: 2.5rem; color: #333; margin:0; }
+  #introScreen div { display: flex; gap: 10px; justify-content: center; }
+  #introScreen button { padding: 10px 20px; font-size: 1.2rem; border-radius: 10px; border: none; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  #introScreen button:hover { background: #ffe8e0; }
+  .intro-float { position: absolute; pointer-events: none; user-select: none; z-index: 101; opacity: 0; transition: opacity 2s ease; }
+
+  #introMessage { position: absolute; top: 45%; left: 30%; transform: translate(-50%, -50%); text-align: left; color: #222; font-family: Independent, ChungjuKimsaeng, GounBatang, Pretendard, NeoDonggeunmo, Cafe24LovingU; font-size: 5rem; line-height: 1.4; z-index: 102; pointer-events: none; user-select: none; }
+  #introMessage .line { display: inline-block; opacity: 0; transform: translateY(10px); animation: fadeUp 1.5s ease forwards; }
+  #introMessage .line:nth-child(1) { animation-delay: 0.5s; }
+  #introMessage .line:nth-child(3) { animation-delay: 2s; }
+  #introMessage .line:nth-child(5) { animation-delay: 3.5s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+  .fixedText { position: absolute; user-select: none; pointer-events: none; font-family: Independent, ChungjuKimsaeng, GounBatang, Pretendard, NeoDonggeunmo, Cafe24LovingU; transform: translate(-50%, -50%); will-change: transform, opacity; }
+  #monitor { position: absolute; pointer-events: none; user-select: none; font-family: Independent, ChungjuKimsaeng, GounBatang, Pretendard,NeoDonggeunmo, Cafe24LovingU; transform: translate(-50%, -50%); }
+
+ 
+  .stamp-pop { animation: stampPop 220ms ease-out forwards; }
+  @keyframes stampPop {
+    0%   { transform: translate(-50%, -50%) scale(0.85) rotate(-2deg); filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+    60%  { transform: translate(-50%, -50%) scale(1.12) rotate(1deg); filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.25)); }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0); filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  }
+
+ 
+  .ui-panel {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  .group { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .group label { width: 52px; opacity: .8; }
+  .group input[type="range"]{ width: 180px; }
+
+  #stats { position: fixed;  right: 10px; background: rgba(255,255,255,0.8); padding: 6px 10px; border-radius: 8px; z-index: 20; text-align: right;  bottom: 10px; font-size: 12px;}
+
+  .ui-panel button { font-size: 13px; padding: 6px 12px; border-radius: 8px; }
+
+#backgroundSlider {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none; 
+}
+
+
+#backgroundSlider button {
+  pointer-events: auto;
+}
+</style>
+</head>
+<body>
+
+<div id="backgroundSlider">
+  <img alt="page1" class="bg-slide active" src="page1.jpg"/>
+  <img alt="page2" class="bg-slide" src="page2.jpg"/>
+  <img alt="page3" class="bg-slide" src="page3.jpg"/>
+    <img alt="page4" class="bg-slide" src="page.jpg"/>
+  <button id="prevBg">&lt;</button>
+  <button id="nextBg">&gt;</button>
+</div>
+
+
+<div id="introScreen">
+  <h1>도장찍기</h1>
+  <div>
+    <button id="startBtn">Start</button>
+    <button id="howToBtn">설명</button>
+  </div>
+</div>
+
+<div id="introMessage">
+  <span class="line">원하는</span><br/>
+  <span class="line">단어를</span><br/>
+  <span class="line">찍어보자!</span>
+</div>
+
+
+<div class="ui-panel" id="appUI" style="display:none;">
+  <div class="group"><input id="myType" placeholder="단어 입력" type="text" value="도장"/></div>
+  <div class="group">
+    <label>폰트</label>
+    <select id="fontSelect">
+      <option value="Independent">독립체</option>
+      <option value="ChungjuKimsaeng">충주김생체</option>
+      <option value="GounBatang">고운바탕</option>
+      <option value="Pretendard">프리텐다드</option>
+       <option value="NeoDonggeunmo">neo둥근모</option>
+        <option value="Cafe24LovingU">Cafe24LovingU</option>
+
+    </select>
+    <input id="myColor" type="color" value="#c0392b"/>
+  </div>
+  <div class="group">
+    <label>크기</label>
+    <input id="fontSize" max="220" min="20" type="range" value="96"/>
+    <span id="fontSizeVal">96</span>
+  </div>
+  <div class="group">
+    <label>투명도</label>
+    <input id="opacity" max="1" min="0.1" step="0.05" type="range" value="1"/>
+    <span id="opacityVal">1.00</span>
+  </div>
+  <div class="group">
+    <button id="brushToggle">🖌️ 붓모드 OFF</button>
+    <label>간격</label>
+    <input id="brushSpacing" max="1.5" min="0.3" step="0.05" type="range" value="0.8"/>
+    <span id="brushSpacingVal">0.80×</span>
+  </div>
+  <div class="group">
+    <button id="mirrorToggle">🪞 미러링 OFF</button>
+    <button id="randomColorToggle">🎨 랜덤색 OFF</button>
+    <button id="shadowToggle">🌙 그림자 OFF</button>
+    <button id="bgToggle">🖼️ 배경 ON</button>
+    <button id="soundToggle">🔊 효과음 OFF</button>
+    <!-- 랜덤단어 버튼을 효과음 옆에 배치 -->
+    <button id="randomWordBtn">🎲 랜덤단어</button>
+  </div>
+  <div class="group"><button id="undo">↩️ Undo</button><button id="redo">↪️ Redo</button></div>
+  <div class="group" style="justify-content:flex-start;">
+    <button id="reset" style="background:#ffdddd;">삭제</button>
+    <button id="saveImage" style="background:#d9f7d9;">저장</button>
+  </div>
+</div>
+
+
+<div id="monitor" style="font-size:96px;color:#c0392b; opacity:1;">도장</div>
+<div id="stats">총 글자: 0<br/>사용 시간: 00:00:00</div>
+
+
+
+<div id="howToModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; justify-content:center; align-items:center;">
+  <div style="background:white; padding:30px; border-radius:12px; max-width:400px; text-align:center; font-family:Pretendard;">
+    <h2>도장찍기 함 써볼까?</h2>
+    <p>단어를 입력 후 화면을 클릭해 도장을 찍는다!<br>
+       폰트, 크기, 색상, 투명도를 조절할 수 있다!<br>
+       붓모드로 그림을 그릴 수 있다!<br>
+       배경은 on/off 가능하고 옆으로가기 버튼으로 바꿀 수 있다!<br>
+       </p>
+    <button id="closeHowToBtn" style="margin-top:15px;">닫기</button>
+  </div>
+</div>
+
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+
+const introTexts=["쾅!","눌러봐","뿅","하이","쿵", "짜잔", "안녕?"];
+const introFonts=["Independent","ChungjuKimsaeng","GounBatang","Pretendard","NeoDonggeunmo", "Cafe24LovingU"];
+let introTextInterval=null;
+
+function spawnIntroText(){
+  const div=document.createElement("div");
+  div.className="intro-float";
+  div.textContent=introTexts[Math.floor(Math.random()*introTexts.length)];
+  div.style.left=Math.random()*window.innerWidth+"px";
+  div.style.top=Math.random()*window.innerHeight+"px";
+  div.style.fontFamily=introFonts[Math.floor(Math.random()*introFonts.length)];
+  div.style.fontSize=(10+Math.random()*40)+"px"; div.style.color="#4F453A";
+  document.body.appendChild(div);
+  requestAnimationFrame(()=>div.style.opacity=1);
+  setTimeout(()=>div.style.opacity=0,2500);
+  setTimeout(()=>div.remove(),4500);
+}
+
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const intro=document.getElementById("introScreen");
+  const introMsg=document.getElementById("introMessage");
+  const appUI=document.getElementById("appUI");
+  const startBtn=document.getElementById("startBtn");
+  const slides=document.querySelectorAll("#backgroundSlider .bg-slide");
+  const prevBtn=document.getElementById("prevBg");
+  const nextBtn=document.getElementById("nextBg");
+  const bgToggle=document.getElementById("bgToggle");
+
+  const monitor=document.getElementById("monitor");
+  const myType=document.getElementById("myType");
+  const myColor=document.getElementById("myColor");
+  const fontSelect=document.getElementById("fontSelect");
+  const fontSize=document.getElementById("fontSize");
+  const fontSizeVal=document.getElementById("fontSizeVal");
+  const opacityInput=document.getElementById("opacity");
+  const opacityVal=document.getElementById("opacityVal");
+  const shadowToggle=document.getElementById("shadowToggle");
+  const randomColorToggle=document.getElementById("randomColorToggle");
+  const brushToggle=document.getElementById("brushToggle");
+  const brushSpacing=document.getElementById("brushSpacing");
+  const brushSpacingVal=document.getElementById("brushSpacingVal");
+  const mirrorToggle=document.getElementById("mirrorToggle");
+  const undoBtn=document.getElementById("undo");
+  const redoBtn=document.getElementById("redo");
+  const resetBtn=document.getElementById("reset");
+  const soundToggle=document.getElementById("soundToggle");
+  const saveBtn=document.getElementById("saveImage");
+  const randomWordBtn=document.getElementById("randomWordBtn");
+  const stats=document.getElementById("stats");
+
+  let isDragging=false,lastX=0,lastY=0;
+  let shadowOn=false,randomColorOn=false,brushOn=false,soundOn=false,mirrorOn=false;
+  let undoStack=[],redoStack=[]; let totalLetters=0,startTime=0; const soundURL="click.wav";
+
+  let bgVisible=true, currentBg=0;
+  const showBg=i=>slides.forEach((img,idx)=>img.classList.toggle("active",idx===i));
+  prevBtn.onclick=()=>{currentBg=(currentBg-1+slides.length)%slides.length;showBg(currentBg);};
+  nextBtn.onclick=()=>{currentBg=(currentBg+1)%slides.length;showBg(currentBg);};
+  if(bgToggle) bgToggle.onclick=()=>{bgVisible=!bgVisible;document.getElementById('backgroundSlider').style.display=bgVisible?'block':'none';bgToggle.textContent=bgVisible?'🖼️ 배경 ON':'🖼️ 배경 OFF';};
+
+  function setMonitorStyles(){
+    monitor.textContent = myType.value || "도장";
+    monitor.style.color = myColor.value;
+    monitor.style.fontFamily = fontSelect.value;
+    monitor.style.fontSize = Number(fontSize.value)+"px";
+    monitor.style.opacity = Number(opacityInput.value);
+    monitor.style.textShadow = shadowOn?"2px 2px 5px rgba(0,0,0,0.4)":"none";
+    monitor.style.transform = `translate(-50%, -50%) ${mirrorOn? 'scaleX(-1)':''}`;
+  }
+
+  function createWord(text,x,y,color,font,size,opacity,playSound=true,save=true){
+    if(!text) text="도장";
+    const fixed=document.createElement("div");
+    fixed.textContent=text; fixed.className="fixedText stamped stamp-pop";
+    fixed.style.left=x+"px"; fixed.style.top=y+"px";
+    fixed.style.color=color; fixed.style.fontFamily=font; fixed.style.fontSize=size+"px"; fixed.style.opacity=opacity;
+    if(shadowOn) fixed.style.textShadow="2px 2px 5px rgba(0,0,0,0.4)";
+    fixed.style.transform = `translate(-50%, -50%) ${mirrorOn? 'scaleX(-1)':''}`;
+    fixed.addEventListener('animationend', ()=>fixed.classList.remove('stamp-pop'), {once:true});
+    document.body.appendChild(fixed);
+    if(soundOn&&playSound) new Audio(soundURL).play();
+    if(save){undoStack.push(fixed);redoStack=[];totalLetters++;updateStats();}
+  }
+
+  function randColor(){return "#"+Math.floor(Math.random()*16777215).toString(16).padStart(6,'0');}
+
+  function updateStats(){
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    const h=String(Math.floor(elapsed/3600)).padStart(2,"0");
+    const m=String(Math.floor((elapsed%3600)/60)).padStart(2,"0");
+    const s=String(elapsed%60).padStart(2,"0");
+    stats.innerHTML=`총 글자: ${totalLetters}<br>사용 시간: ${h}:${m}:${s}`;
+  }
+
+  
+  [myType,myColor,fontSelect,fontSize,opacityInput].forEach(el=>{
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      if(el===fontSize) fontSizeVal.textContent=fontSize.value;
+      if(el===opacityInput) opacityVal.textContent=Number(opacityInput.value).toFixed(2);
+      setMonitorStyles();
+    });
+  });
+
+
+  if(shadowToggle) shadowToggle.onclick=()=>{shadowOn=!shadowOn;shadowToggle.textContent=shadowOn?"🌙 그림자 ON":"🌙 그림자 OFF";setMonitorStyles();};
+  if(randomColorToggle) randomColorToggle.onclick=()=>{randomColorOn=!randomColorOn;randomColorToggle.textContent=randomColorOn?"🎨 랜덤색 ON":"🎨 랜덤색 OFF";};
+  if(brushToggle) brushToggle.onclick=()=>{brushOn=!brushOn;brushToggle.textContent=brushOn?"🖌️ 붓모드 ON":"🖌️ 붓모드 OFF";};
+  if(mirrorToggle) mirrorToggle.onclick=()=>{mirrorOn=!mirrorOn;mirrorToggle.textContent=mirrorOn?"🪞 미러링 ON":"🪞 미러링 OFF";setMonitorStyles();};
+  if(soundToggle) soundToggle.onclick=()=>{soundOn=!soundOn;soundToggle.textContent=soundOn?"🔊 효과음 ON":"🔊 효과음 OFF";};
+
+  if(brushSpacing) brushSpacing.addEventListener('input',()=>brushSpacingVal.textContent=Number(brushSpacing.value).toFixed(2)+"×");
+
+  
+  document.addEventListener("mousemove",e=>{
+    monitor.style.left=e.pageX+"px"; monitor.style.top=e.pageY+"px";
+    if(isDragging&&brushOn){
+      const dx=e.pageX-lastX,dy=e.pageY-lastY; const dist=Math.hypot(dx,dy);
+      const spacing = Number(fontSize.value)*Number(brushSpacing.value);
+      if(dist>spacing){
+        const baseOpacity=Number(opacityInput.value);
+        const color=randomColorOn?randColor():myColor.value;
+       createWord(myType.value,e.pageX,e.pageY,color,fontSelect.value,Number(fontSize.value),
+           baseOpacity, false, false);
+
+      }
+    }
+  });
+
+  document.addEventListener("mousedown",e=>{
+    if (e.target.closest("#backgroundSlider button")) return;
+    if(e.target.closest(".ui-panel"))return;
+    isDragging=true; lastX=e.pageX; lastY=e.pageY;
+    const color=randomColorOn?randColor():myColor.value;
+    createWord(myType.value,e.pageX,e.pageY,color,fontSelect.value,Number(fontSize.value),Number(opacityInput.value),true,true);
+  });
+  document.addEventListener("mouseup",()=>isDragging=false);
+
+
+  undoBtn.onclick=()=>{let last=undoStack.pop();if(last){redoStack.push(last);last.remove();totalLetters--;updateStats();}};
+  redoBtn.onclick=()=>{let el=redoStack.pop();if(el){document.body.appendChild(el);undoStack.push(el);totalLetters++;updateStats();}};
+  resetBtn.onclick=()=>{document.querySelectorAll(".fixedText").forEach(el=>el.remove());undoStack=[];redoStack=[];totalLetters=0;updateStats();};
+
+ 
+  saveBtn.onclick=()=>{
+    html2canvas(document.body,{backgroundColor:null,useCORS:true,allowTaint:true}).then(canvas=>{
+      const link=document.createElement('a'); link.download='my_drawing.png'; link.href=canvas.toDataURL('image/png'); link.click();
+    });
+  };
+
+  
+  startBtn.onclick = () => {
+    if (introTextInterval) { clearInterval(introTextInterval); introTextInterval = null; }
+    document.querySelectorAll(".intro-float").forEach(el => el.remove());
+    // remove or hide intro elements exactly like original behavior
+    intro.remove();
+    introMsg.remove();
+    appUI.style.display = "flex";
+    startTime = Date.now(); setInterval(updateStats, 1000);
+    setMonitorStyles();
+  };
+
+  introTextInterval = setInterval(spawnIntroText, 1200);
+
+ 
+  const wordList = ["커피사와","옥상으로와","안싸울래요","차카게살자","졸기","핫초코먹기","그림그리기", "잠자기", "만원", "교수님 유튜브 보기", "HTLM공부", "바보", "송지은", "비싸다", "다 덤벼","하기 싫어요","과제하기","집에 가기","케이크", "운동하기", "그래안했다"];
+  randomWordBtn.addEventListener("click", () => {
+    const randWord = wordList[Math.floor(Math.random() * wordList.length)];
+    myType.value = randWord;
+    myType.dispatchEvent(new Event("input"));
+  });
+
+  
+  setMonitorStyles();
+  fontSizeVal.textContent=fontSize.value; opacityVal.textContent=Number(opacityInput.value).toFixed(2);
+}); // DOMContentLoaded end
+
+(function(){
+  function blockSelectionOn(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+   
+    el.addEventListener('selectstart', function(e){ e.preventDefault(); }, true);
+    el.addEventListener('dragstart',  function(e){ e.preventDefault(); }, true);
+  }
+  blockSelectionOn('appUI');        
+  blockSelectionOn('introScreen');  
+  blockSelectionOn('backgroundSlider'); 
+})();
+
+const howToBtn = document.getElementById("howToBtn");
+const howToModal = document.getElementById("howToModal");
+const closeHowToBtn = document.getElementById("closeHowToBtn");
+
+if (howToBtn && howToModal && closeHowToBtn) {
+  howToBtn.addEventListener("click", () => {
+    howToModal.style.display = "flex";
+  });
+  closeHowToBtn.addEventListener("click", () => {
+    howToModal.style.display = "none";
+  });
+  howToModal.addEventListener("click", (e) => {
+    if (e.target === howToModal) howToModal.style.display = "none";
+  });
+}
+
+
+
+</script>
+</body>
+</html>
